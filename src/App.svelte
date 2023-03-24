@@ -1,7 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { FaceMesh, FACEMESH_LEFT_EYE } from "@mediapipe/face_mesh";
-  import { Camera } from "@mediapipe/camera_utils";
+  import { FaceMesh as _FaceMesh } from "@mediapipe/face_mesh";
+  import { Camera as _Camera } from "@mediapipe/camera_utils";
+
+  const FaceMesh = _FaceMesh || window.FaceMesh;
+  const Camera = _Camera || window.Camera;
+
   import {
     LEFT_EYE,
     RIGHT_EYE,
@@ -22,8 +26,12 @@
   let snapCanvasCtx: CanvasRenderingContext2D;
   let landmarksCanvasElement: HTMLCanvasElement;
   let landmarksCtx: CanvasRenderingContext2D;
+  let baseRootEl: HTMLDivElement;
 
   onMount(() => {
+    baseRootEl = document.getElementById("canvas-root") as HTMLDivElement;
+    if (!baseRootEl._data) baseRootEl._data = { image: null };
+
     canvasCtx = canvasElement.getContext("2d");
     // offscreen canvas for landmarks
     landmarksCanvasElement = document.createElement("canvas");
@@ -148,6 +156,8 @@
       snapCanvasElement.width,
       snapCanvasElement.height
     );
+
+    baseRootEl._data.image = snapCanvasElement.toDataURL();
   }
 </script>
 
@@ -161,7 +171,7 @@
     class="w-full"
   />
 
-  <div class="flex absolute bottom-1 left-1 items-start">
+  <div class="flex absolute bottom-1 left-1 items-end">
     <button on:click={snapImage} class="capture-btn">Snap</button>
     <canvas
       bind:this={snapCanvasElement}
@@ -173,7 +183,13 @@
 </div>
 
 <style lang="postcss" scoped>
+  canvas {
+    @apply rounded-lg shadow-sm;
+  }
   .capture-btn {
-    @apply text-sm z-10 bg-slate-50 rounded-lg px-2 py-1 shadow-sm hover:bg-cyan-100;
+    @apply font-bold z-10 bg-slate-50 rounded-lg px-2 py-1 shadow-sm hover:bg-cyan-100;
+  }
+  .capture-btn :global(*) {
+    color: black !important;
   }
 </style>

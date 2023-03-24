@@ -25,11 +25,7 @@ export interface DrawingLayer {
 declare global {
 	interface HTMLDivElement {
 		_data: {
-			colors: RGB[];
 			image: string;
 		}
-	}
-	interface Window {
-		_updateCanvas: (width: number, height: number) => void;
 	}
 }
