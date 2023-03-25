@@ -161,7 +161,7 @@
   }
 </script>
 
-<div class="relative">
+<div class="relative container">
   <!-- svelte-ignore a11y-media-has-caption -->
   <video bind:this={videoElement} class="hidden" />
   <canvas
@@ -187,9 +187,9 @@
     @apply rounded-lg shadow-sm;
   }
   .capture-btn {
-    @apply font-bold z-10 bg-slate-50 rounded-lg px-2 py-1 shadow-sm hover:bg-cyan-100;
+    @apply text-black font-bold z-10 bg-slate-50 rounded-lg px-2 py-1 shadow-sm hover:bg-cyan-100;
   }
-  .capture-btn :global(*) {
+  .container :global(*) {
     color: black !important;
   }
 </style>
