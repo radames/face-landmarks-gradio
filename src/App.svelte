@@ -163,7 +163,7 @@
 
 <div class="relative container">
   <!-- svelte-ignore a11y-media-has-caption -->
-  <video bind:this={videoElement} class="hidden" />
+  <video bind:this={videoElement} class="hidden" muted playsinline />
   <canvas
     bind:this={canvasElement}
     width="720px"
