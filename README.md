@@ -16,7 +16,7 @@ npm run dev
 npm run build
 ```
 
-After building your custom component will be in the `dist` folder. The single `index.js` can now be used as a custom component in Gradio read more about how to use on your Gradio app [here](custom-gradio-component.md)
+After building your custom component will be in the `dist` folder. The single `index.js` can now be used as a custom component in Gradio read more about how to use on your Gradio app [here](custom_gradio_component.md)
 
 ## How to Use in Gradio
 
