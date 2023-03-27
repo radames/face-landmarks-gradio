@@ -1,47 +1,69 @@
-# Svelte + TS + Vite
+# Face Landmark Detection Gradio Custom Component
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+This is a custom Svelte component for [Gradio](https://gradio.app) that uses [mdeiapipe face landmarks detection](https://google.github.io/mediapipe/solutions/face_mesh.html) to detect face landmarks in an image. Given a face position, it creates a conditioning image used alongside the input prompt to generate an image. The base model is the [Uncanny Faces Model](https://huggingface.co/multimodalart/uncannyfaces_25K) developed as a tutorial on how to train your our [ControlNet Model](https://huggingface.co/blog/train-your-controlnet)
 
-## Recommended IDE Setup
+## How to Test  
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+```bash
+npm run dev
+```
 
-## Need an official Svelte framework?
+## How to Build
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+<https://vitejs.dev/guide/features.html#disabling-css-injection-into-the-page>
 
-## Technical considerations
+```bash
+npm run build
+```
 
-**Why use this over SvelteKit?**
+After building your custom component will be in the `dist` folder. The single `index.js` can now be used as a custom component in Gradio read more about how to use on your Gradio app [here](custom-gradio-component.md)
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+## How to Use in Gradio
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+Note at the code below, we're using Gradio file server to serve the `index.js` located at the root level of your Gradio app `app.py`. This is done using script source `script.src = "file=index.js"` notation. But you can also use a CDN or any other way to serve the `index.js` file as long as it's served as `content-type: application/javascript`.
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+```python
+import gradio as gr
+import requests 
+from io import BytesIO
+from PIL import Image
+import base64
 
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
+canvas_html = "<face-canvas id='canvas-root' style='display:flex;max-width: 500px;margin: 0 auto;'></face-canvas>"
+load_js = """
+async () => {
+  const script = document.createElement('script');
+  script.type = "module"
+  script.src = "file=index.js"
+  document.head.appendChild(script);
+}
+"""
+get_js_image = """
+async (canvasData) => {
+  const canvasEl = document.getElementById("canvas-root");
+  const data = canvasEl? canvasEl._data : null;
+  return data
+}
+"""
 
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
+def predict(canvas_data):
+  base64_img = canvas_data['image']
+  image_data = base64.b64decode(base64_img.split(',')[1])
+  image = Image.open(BytesIO(image_data))
+  return image
 
-**Why include `.vscode/extensions.json`?**
+blocks = gr.Blocks()
+with blocks:
+  canvas_data = gr.JSON(value={}, visible=False)
+  with gr.Row():
+    with gr.Column(visible=True) as box_el:
+        canvas = gr.HTML(canvas_html,elem_id="canvas_html")
+    with gr.Column(visible=True) as box_el:
+        image_out = gr.Image()
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+  btn = gr.Button("Run")
+  btn.click(fn=predict, inputs=[canvas_data], outputs=[image_out], _js=get_js_image)
+  blocks.load(None, None, None, _js=load_js)
 
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+blocks.launch(debug=True, inline=True)
 ```
