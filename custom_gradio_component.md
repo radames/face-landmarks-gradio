@@ -1,6 +1,6 @@
 # Custom Gradio Component
 
-A custom componentent is a bundled set of HTML, CSS, and JavaScript and scoped as a single web-component. This allows you to create a custom component that can be used in any Gradio app and has its own UI, logic and styling.
+A custom component is a bundled set of HTML, CSS, and JavaScript and scoped as a single web-component. This allows you to create a custom component that can be used in any Gradio app and has its own UI, logic and styling.
 
 Here I'm using Svelte since it's a great framework for building component-based UIs. But you can use any framework you want or even vanilla JavaScript.
 
@@ -52,12 +52,12 @@ npm run dev
 To build
 
 ```bash
-    npm run build
+npm run build
 ```
 
 Your component will be built in the `dist` folder. The single `index.js` can now be used as a custom component in the Gradio
 
-## Step 3: Loade your component in Gradio
+## Step 3: Load your component in Gradio
 
 We're using Gradio [`_js`](https://gradio.app/custom-CSS-and-JS/#custom-js) feature to run a custom JavaScript function that will load the `index.js` file.
 

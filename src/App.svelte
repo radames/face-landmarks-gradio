@@ -27,11 +27,17 @@
   let landmarksCanvasElement: HTMLCanvasElement;
   let landmarksCtx: CanvasRenderingContext2D;
   let baseRootEl: HTMLDivElement;
+  let drawingMode = "landmarks";
+  let drawingModeFn = drawLandmarks;
 
   onMount(() => {
     baseRootEl = document.getElementById("canvas-root") as HTMLDivElement;
     if (!baseRootEl._data) baseRootEl._data = { image: null };
-
+    if (baseRootEl.dataset.mode) {
+      const mode = baseRootEl.dataset.mode;
+      drawingMode = mode;
+      drawingModeFn = mode === "points" ? drawPoints : drawLandmarks;
+    }
     canvasCtx = canvasElement.getContext("2d");
     // offscreen canvas for landmarks
     landmarksCanvasElement = document.createElement("canvas");
@@ -89,6 +95,37 @@
     }
     ctx.restore();
   }
+
+  function drawPoints(
+    ctx: CanvasRenderingContext2D,
+    landmarks: NormalizedLandmarkList,
+    connections: number[],
+    color = "black",
+    lineWidth = 4,
+    fill = false
+  ) {
+    ctx.save();
+    color = "black";
+    ctx.strokeStyle = color;
+    // ctx.lineWidth = lineWidth;
+    for (const [i, id] of connections.entries()) {
+      const p = landmarks[id];
+      ctx.beginPath();
+      ctx.ellipse(
+        p.x * canvasElement.width,
+        p.y * canvasElement.height,
+        2.5,
+        2.5,
+        0,
+        0,
+        2 * Math.PI
+      );
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -107,9 +144,9 @@
     );
     if (results.multiFaceLandmarks) {
       for (const landmarks of results.multiFaceLandmarks) {
-        drawLandmarks(landmarksCtx, landmarks, LEFT_EYE, "magenta", 8, true);
-        drawLandmarks(landmarksCtx, landmarks, RIGHT_EYE, "magenta", 8, true);
-        drawLandmarks(
+        drawingModeFn(landmarksCtx, landmarks, LEFT_EYE, "magenta", 8, true);
+        drawingModeFn(landmarksCtx, landmarks, RIGHT_EYE, "magenta", 8, true);
+        drawingModeFn(
           landmarksCtx,
           landmarks,
           RIGHT_EYE_BROW,
@@ -117,7 +154,7 @@
           8,
           false
         );
-        drawLandmarks(
+        drawingModeFn(
           landmarksCtx,
           landmarks,
           LEFT_EYE_BROW,
@@ -125,11 +162,11 @@
           8,
           false
         );
-        drawLandmarks(landmarksCtx, landmarks, OUTER_LIPS, "cyan", 8, true);
-        drawLandmarks(landmarksCtx, landmarks, INNER_LIPS, "blue", 8, true);
-        drawLandmarks(landmarksCtx, landmarks, NOSE_TOP, "orange", 8, false);
-        drawLandmarks(landmarksCtx, landmarks, NOSE_BASE, "orange", 8, false);
-        drawLandmarks(landmarksCtx, landmarks, SILLHOUETTE, "lime", 8, false);
+        drawingModeFn(landmarksCtx, landmarks, OUTER_LIPS, "cyan", 8, true);
+        drawingModeFn(landmarksCtx, landmarks, INNER_LIPS, "blue", 8, true);
+        drawingModeFn(landmarksCtx, landmarks, NOSE_TOP, "orange", 8, false);
+        drawingModeFn(landmarksCtx, landmarks, NOSE_BASE, "orange", 8, false);
+        drawingModeFn(landmarksCtx, landmarks, SILLHOUETTE, "lime", 8, false);
       }
     }
     canvasCtx.drawImage(
@@ -142,7 +179,8 @@
   }
   function snapImage() {
     snapCanvasCtx = snapCanvasElement.getContext("2d");
-    snapCanvasCtx.fillStyle = "black";
+    snapCanvasCtx.save();
+    snapCanvasCtx.fillStyle = drawingMode === "landmarks" ? "black" : "white";
     snapCanvasCtx.fillRect(
       0,
       0,
@@ -156,6 +194,24 @@
       snapCanvasElement.width,
       snapCanvasElement.height
     );
+    if (drawingMode === "points") {
+      snapCanvasCtx.globalCompositeOperation = "difference";
+      snapCanvasCtx.fillStyle = "white";
+      snapCanvasCtx.fillRect(
+        0,
+        0,
+        snapCanvasElement.width,
+        snapCanvasElement.height
+      );
+      snapCanvasCtx.drawImage(
+        landmarksCanvasElement,
+        0,
+        0,
+        snapCanvasElement.width,
+        snapCanvasElement.height
+      );
+    }
+    snapCanvasCtx.restore();
 
     baseRootEl._data.image = snapCanvasElement.toDataURL();
   }
