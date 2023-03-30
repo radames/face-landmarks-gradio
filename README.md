@@ -10,8 +10,6 @@ npm run dev
 
 ## How to Build
 
-<https://vitejs.dev/guide/features.html#disabling-css-injection-into-the-page>
-
 ```bash
 npm run build
 ```
