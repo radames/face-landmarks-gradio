@@ -20,6 +20,8 @@ After building your custom component will be in the `dist` folder. The single `i
 
 Note at the code below, we're using Gradio file server to serve the `index.js` located at the root level of your Gradio app `app.py`. This is done using script source `script.src = "file=index.js"` notation. But you can also use a CDN or any other way to serve the `index.js` file as long as it's served as `content-type: application/javascript`.
 
+Live demo <https://huggingface.co/spaces/radames/face-landmarks-gradio>
+
 ```python
 import gradio as gr
 import requests 
