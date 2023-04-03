@@ -157,6 +157,7 @@ function drawLandmarks(
     ctx.beginPath();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
+    ctx.lineJoin = "round";
     ctx.lineWidth = lineWidth;
     for (const [i, id] of connections.entries()) {
         const p = landmarks[id];
@@ -182,6 +183,7 @@ function drawPoints(
 ) {
     ctx.save();
     ctx.fillStyle = color;
+    ctx.lineJoin = "round";
     ctx.strokeStyle = color;
     for (const [i, id] of connections.entries()) {
         const p = landmarks[id];
