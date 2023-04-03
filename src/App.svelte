@@ -2,22 +2,14 @@
   import { onMount } from "svelte";
   import { FaceMesh as _FaceMesh } from "@mediapipe/face_mesh";
   import { Camera as _Camera } from "@mediapipe/camera_utils";
+  import {
+    drawingModeFn,
+    DrawingMode,
+    type DrawingModeType,
+  } from "./lib/drawingModes";
 
   const FaceMesh = _FaceMesh || window.FaceMesh;
   const Camera = _Camera || window.Camera;
-
-  import {
-    LEFT_EYE,
-    RIGHT_EYE,
-    RIGHT_EYE_BROW,
-    LEFT_EYE_BROW,
-    OUTER_LIPS,
-    INNER_LIPS,
-    NOSE_TOP,
-    NOSE_BASE,
-    SILLHOUETTE,
-  } from "./lib/constants";
-  import type { NormalizedLandmarkList } from "@mediapipe/face_mesh";
 
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
@@ -27,16 +19,14 @@
   let landmarksCanvasElement: HTMLCanvasElement;
   let landmarksCtx: CanvasRenderingContext2D;
   let baseRootEl: HTMLDivElement;
-  let drawingMode = "landmarks";
-  let drawingModeFn = drawLandmarks;
+  let drawingMode: DrawingModeType = DrawingMode.POINTS;
 
   onMount(() => {
     baseRootEl = document.getElementById("canvas-root") as HTMLDivElement;
     if (!baseRootEl._data) baseRootEl._data = { image: null };
     if (baseRootEl.dataset.mode) {
       const mode = baseRootEl.dataset.mode;
-      drawingMode = mode;
-      drawingModeFn = mode === "points" ? drawPoints : drawLandmarks;
+      drawingMode = DrawingMode[mode.toUpperCase()];
     }
     canvasCtx = canvasElement.getContext("2d");
     // offscreen canvas for landmarks
@@ -62,70 +52,13 @@
       onFrame: async () => {
         await faceMesh.send({ image: videoElement });
       },
-      width: 720,
-      height: 720,
+      width: 512,
+
+      height: 512,
     });
     camera.start();
   });
 
-  function drawLandmarks(
-    ctx: CanvasRenderingContext2D,
-    landmarks: NormalizedLandmarkList,
-    connections: number[],
-    color = "lime",
-    lineWidth = 4,
-    fill = false
-  ) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = lineWidth;
-    for (const [i, id] of connections.entries()) {
-      const p = landmarks[id];
-      if (i === 0)
-        ctx.moveTo(p.x * canvasElement.width, p.y * canvasElement.height);
-      else ctx.lineTo(p.x * canvasElement.width, p.y * canvasElement.height);
-    }
-    if (fill) {
-      ctx.closePath();
-      ctx.fill();
-    } else {
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function drawPoints(
-    ctx: CanvasRenderingContext2D,
-    landmarks: NormalizedLandmarkList,
-    connections: number[],
-    color = "black",
-    lineWidth = 4,
-    fill = false
-  ) {
-    ctx.save();
-    color = "black";
-    ctx.strokeStyle = color;
-    // ctx.lineWidth = lineWidth;
-    for (const [i, id] of connections.entries()) {
-      const p = landmarks[id];
-      ctx.beginPath();
-      ctx.ellipse(
-        p.x * canvasElement.width,
-        p.y * canvasElement.height,
-        2.5,
-        2.5,
-        0,
-        0,
-        2 * Math.PI
-      );
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fill();
-    }
-    ctx.restore();
-  }
   function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -144,29 +77,7 @@
     );
     if (results.multiFaceLandmarks) {
       for (const landmarks of results.multiFaceLandmarks) {
-        drawingModeFn(landmarksCtx, landmarks, LEFT_EYE, "magenta", 8, true);
-        drawingModeFn(landmarksCtx, landmarks, RIGHT_EYE, "magenta", 8, true);
-        drawingModeFn(
-          landmarksCtx,
-          landmarks,
-          RIGHT_EYE_BROW,
-          "yellow",
-          8,
-          false
-        );
-        drawingModeFn(
-          landmarksCtx,
-          landmarks,
-          LEFT_EYE_BROW,
-          "yellow",
-          8,
-          false
-        );
-        drawingModeFn(landmarksCtx, landmarks, OUTER_LIPS, "cyan", 8, true);
-        drawingModeFn(landmarksCtx, landmarks, INNER_LIPS, "blue", 8, true);
-        drawingModeFn(landmarksCtx, landmarks, NOSE_TOP, "orange", 8, false);
-        drawingModeFn(landmarksCtx, landmarks, NOSE_BASE, "orange", 8, false);
-        drawingModeFn(landmarksCtx, landmarks, SILLHOUETTE, "lime", 8, false);
+        drawingModeFn[drawingMode](landmarksCtx, landmarks);
       }
     }
     canvasCtx.drawImage(
@@ -180,7 +91,8 @@
   function snapImage() {
     snapCanvasCtx = snapCanvasElement.getContext("2d");
     snapCanvasCtx.save();
-    snapCanvasCtx.fillStyle = drawingMode === "landmarks" ? "black" : "white";
+    snapCanvasCtx.fillStyle =
+      drawingMode === DrawingMode.POINTS ? "white" : "black";
     snapCanvasCtx.fillRect(
       0,
       0,
@@ -222,8 +134,12 @@
   <video bind:this={videoElement} class="hidden" muted playsinline />
   <canvas
     bind:this={canvasElement}
-    width="720px"
-    height="720px"
+    width="512
+    
+    px"
+    height="512
+    
+    px"
     class="w-full"
   />
 
@@ -231,8 +147,12 @@
     <button on:click={snapImage} class="capture-btn">Snap</button>
     <canvas
       bind:this={snapCanvasElement}
-      width="720px"
-      height="720px"
+      width="512
+      
+      px"
+      height="512
+      
+      px"
       class="w-32"
     />
   </div>
