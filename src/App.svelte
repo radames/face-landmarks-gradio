@@ -19,7 +19,8 @@
   let landmarksCanvasElement: HTMLCanvasElement;
   let landmarksCtx: CanvasRenderingContext2D;
   let baseRootEl: HTMLDivElement;
-  let drawingMode: DrawingModeType = DrawingMode.POINTS;
+  let drawingMode: DrawingModeType = DrawingMode.LANDMARKS;
+  let maxNumFaces = 5;
 
   onMount(() => {
     baseRootEl = document.getElementById("canvas-root") as HTMLDivElement;
@@ -27,6 +28,7 @@
     if (baseRootEl.dataset.mode) {
       const mode = baseRootEl.dataset.mode;
       drawingMode = DrawingMode[mode.toUpperCase()];
+      maxNumFaces = parseInt(baseRootEl.dataset.maxNumFaces) || 5;
     }
     canvasCtx = canvasElement.getContext("2d");
     // offscreen canvas for landmarks
@@ -41,7 +43,7 @@
       },
     });
     faceMesh.setOptions({
-      maxNumFaces: 1,
+      maxNumFaces: maxNumFaces,
       refineLandmarks: true,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5,
